@@ -1,0 +1,10 @@
+confluent_kafka
+obspy
+schedule
+time
+pytz
+json
+configparser
+uuid
+certifi
+configparser
