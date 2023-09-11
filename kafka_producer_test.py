@@ -8,6 +8,7 @@ from datetime import datetime
 from obspy.clients.seedlink import Client as SeedlinkClient
 from obspy.clients.seedlink.easyseedlink import create_client
 import pytz
+import configparser
 
 def error_cb(err):
     print("Client error: {}".format(err))
@@ -16,13 +17,22 @@ def error_cb(err):
         # Any exception raised from this callback will be re-raised from the
         # triggering flush() or poll() call.
         raise KafkaException(err)
+    
+# Create a ConfigParser instance
+config = configparser.ConfigParser()
+# Load the configuration from the file
+config.read('kafka_config.txt')
+
+bootstrap_servers = config.get('KafkaConfig', 'bootstrap.servers')
+sasl_username = config.get('KafkaConfig', 'sasl.username')
+sasl_password = config.get('KafkaConfig', 'sasl.password')
 
 kafka_config = {
-    'bootstrap.servers': "pkc-921jm.us-east-2.aws.confluent.cloud:9092", 
+    'bootstrap.servers': bootstrap_servers, 
     'sasl.mechanism': 'PLAIN',
     'security.protocol': 'SASL_SSL',
-    'sasl.username': 'OECIXLLKNT7H4IDK',
-    'sasl.password': 'MitUuO9LNEf3PXAaHlzrsFot3h8b8Ez36RhFRC5RL8B4zA3sGV/skq/IRHot8az8',
+    'sasl.username': sasl_username,
+    'sasl.password': sasl_password,
     "ssl.ca.location": certifi.where(),
     'linger.ms': 100,
     'error_cb': error_cb, 
