@@ -44,7 +44,7 @@ kafka_config = {
 }
 
 # anam topic pada confluent
-kafka_topic = 'WAVE_Station' 
+kafka_topic = 'wave_station_v3' 
     
 # menggunakan Producer dengan memasukkan kafka_config
 producer = Producer(kafka_config)
@@ -74,12 +74,17 @@ def fetch_data(station_name):
             formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
             starttime = UTCDateTime(formatted_time) 
             endtime = starttime
-            st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - 60, endtime)
+            st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - 60*2, endtime - 60)
             value = {}
 
             for ch in st:
+                start_time = ch.stats.starttime
+                end_time = ch.stats.endtime
+                value["start_time"] = str(start_time)
+                value["end_time"] = str(end_time)
                 value[ch.stats.channel] = ch.data.tolist()
                 log_data(stat=station_name,data=f"Data from {ch.stats.channel} fetch succesfully !!")
+
                 # interval detik data yang diambil
                 time_interval = int(time_to_seconds(ch.stats.endtime)) - int(time_to_seconds(ch.stats.starttime))
                 log_data(stat=station_name,data=f"from {ch.stats.starttime} to {ch.stats.endtime}")
@@ -89,6 +94,12 @@ def fetch_data(station_name):
             JSON_value = json.dumps(value)
             producer.produce(kafka_topic, key=station_name, value=JSON_value,callback=acked)
             log_data(stat=station_name,data=f'Waves Produced succesfully')
+
+        except KeyboardInterrupt:
+            print("Keyboard interrupt received. Terminating processes.")
+            pool.terminate()
+            pool.join()
+            print("Processes terminated.")
 
         except Exception as e:
             print(f"Error for station {station_name}: {str(e)}")

@@ -2,7 +2,6 @@ from confluent_kafka import Producer, KafkaError, KafkaException
 import certifi
 from obspy.clients.fdsn import Client
 from obspy import UTCDateTime
-import time
 from datetime import datetime
 from obspy.clients.seedlink import Client as SeedlinkClient
 from obspy.clients.seedlink.easyseedlink import create_client
@@ -11,7 +10,6 @@ import json
 import configparser
 import threading
 import signal
-import sys
 
 # fungsi callback error
 def error_cb(err):
@@ -42,7 +40,7 @@ kafka_config = {
 }
 
 # nama topic pada confluent
-kafka_topic = 'WAVE_Station' 
+kafka_topic = 'wave_station_v2' 
 # menggunakan Producer dengan memasukkan kafka_config
 producer = Producer(kafka_config)
 # seedlink untuk mengambil data dari stasiun sensor dengan realtime
@@ -63,7 +61,7 @@ def get_data_seed_link(key_partition):
             starttime = UTCDateTime(formatted_time) 
             endtime = starttime
             print("Producing data...")
-            st = client.get_waveforms("GE", key_partition, "*", "BH*", starttime - 60, endtime)
+            st = client.get_waveforms("GE", key_partition, "*", "BH*", starttime - 60*2, endtime - 60)
             
             # Extract and log the data
             value = {}
