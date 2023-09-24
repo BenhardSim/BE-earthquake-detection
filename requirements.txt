@@ -8,3 +8,4 @@ configparser
 uuid
 certifi
 configparser
+tensorflow

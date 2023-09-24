@@ -10,6 +10,7 @@ import multiprocessing
 import pytz
 import json
 import configparser
+import uuid
 
 # fungsi callback error
 def error_cb(err):
@@ -77,16 +78,20 @@ def fetch_data(station_name):
             st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - 60*2, endtime - 60)
             value = {}
 
+            data_uniqe_id = f'data-id <{str(uuid.uuid4())}>'
+
             for ch in st:
                 start_time = ch.stats.starttime
                 end_time = ch.stats.endtime
                 value["start_time"] = str(start_time)
+                value["id"] = data_uniqe_id
                 value["end_time"] = str(end_time)
                 value[ch.stats.channel] = ch.data.tolist()
                 log_data(stat=station_name,data=f"Data from {ch.stats.channel} fetch succesfully !!")
 
                 # interval detik data yang diambil
                 time_interval = int(time_to_seconds(ch.stats.endtime)) - int(time_to_seconds(ch.stats.starttime))
+                log_data(stat=station_name,data=f"Data ID : {value['id']}")
                 log_data(stat=station_name,data=f"from {ch.stats.starttime} to {ch.stats.endtime}")
                 log_data(stat=station_name,data=f"Time interval of the collected data : {time_interval} seconds")
                 log_data(stat=station_name,data=f'Waves Produced lenght : <{len(ch.data)}>')
