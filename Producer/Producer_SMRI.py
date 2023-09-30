@@ -20,7 +20,7 @@ def error_cb(err):
 # Create a ConfigParser instance
 config = configparser.ConfigParser()
 # Load the configuration from the file
-config.read('kafka_config.txt')
+config.read('../kafka_config.txt')
 
 bootstrap_servers = config.get('KafkaConfig', 'bootstrap.servers')
 sasl_username = config.get('KafkaConfig', 'sasl.username')
@@ -90,6 +90,9 @@ def acked(err, msg):
     else:
         print('Produced to: {} [{}] @ {}'.format(msg.topic(), msg.partition(), msg.offset()))
 
+# values = get_data_seed_link()
+# producer.produce(kafka_topic, key=key_partition, value=values,callback=acked)
+# log_data(f'Waves Produced succesfully')
 
 # fetching data secara terus menerus
 while True:
@@ -98,8 +101,7 @@ while True:
         values = get_data_seed_link()
         producer.produce(kafka_topic, key=key_partition, value=values,callback=acked)
         log_data(f'Waves Produced succesfully')
-        # time.sleep(3)
-    except Exception as e:
+        time.sleep(3)
+    except:
         print("No Trace Data\n")
-        print(f"Error: {str(e)}")
         time.sleep(1)

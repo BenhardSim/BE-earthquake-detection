@@ -75,17 +75,20 @@ def fetch_data(station_name):
             formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
             starttime = UTCDateTime(formatted_time) 
             endtime = starttime
-            st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - 60*2, endtime - 60)
+            st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - 60, endtime)
             value = {}
+            value["stat"] = station_name
 
             data_uniqe_id = f'data-id <{str(uuid.uuid4())}>'
+
+            smallest_channel_length = 99999
 
             for ch in st:
                 start_time = ch.stats.starttime
                 end_time = ch.stats.endtime
-                value["start_time"] = str(start_time)
+                # value["start_time"] = str(start_time)
                 value["id"] = data_uniqe_id
-                value["end_time"] = str(end_time)
+                # value["end_time"] = str(end_time)
                 value[ch.stats.channel] = ch.data.tolist()
                 log_data(stat=station_name,data=f"Data from {ch.stats.channel} fetch succesfully !!")
 
@@ -95,10 +98,16 @@ def fetch_data(station_name):
                 log_data(stat=station_name,data=f"from {ch.stats.starttime} to {ch.stats.endtime}")
                 log_data(stat=station_name,data=f"Time interval of the collected data : {time_interval} seconds")
                 log_data(stat=station_name,data=f'Waves Produced lenght : <{len(ch.data)}>')
+                if smallest_channel_length > len(ch.data):
+                    smallest_channel_length = len(ch.data)
+                    value["start_time"] = str(start_time)
+                    value["end_time"] = str(end_time)
 
             JSON_value = json.dumps(value)
             producer.produce(kafka_topic, key=station_name, value=JSON_value,callback=acked)
             log_data(stat=station_name,data=f'Waves Produced succesfully')
+            process_time = 25
+            time.sleep(60-process_time)
 
         except KeyboardInterrupt:
             print("Keyboard interrupt received. Terminating processes.")
@@ -113,5 +122,7 @@ def fetch_data(station_name):
 
 station_names = ["JAGI", "BBJI","SMRI"]
 if __name__ == "__main__":
-    with multiprocessing.Pool(processes=len(station_names)) as pool:
-        pool.map(fetch_data, station_names)
+    while True:
+        with multiprocessing.Pool(processes=len(station_names)) as pool:
+            pool.map(fetch_data, station_names)
+        

@@ -1,12 +1,14 @@
 from confluent_kafka import Consumer, KafkaError
 import tensorflow as tf
 from tensorflow import keras
+import multiprocessing
 import certifi
 import uuid
 import configparser
 import datetime
 import json
 import numpy as np
+import logging
 
 unique_group_id = f'my-consumer-group-{str(uuid.uuid4())}'
 
@@ -34,6 +36,8 @@ kafka_config = {
 
 # Hyper Parameter
 WINDOW_SIZE = 80
+# Machine Learning Model
+model = keras.models.load_model('../tensorflow_model/conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
 
 # connect ke confluen kafka
 consumer = Consumer(kafka_config)
@@ -45,18 +49,8 @@ consumer.subscribe([kafka_topic])
 def log_data(data, type="LOG",stat="-"):
     print(f"[+] <{stat}> <{type}>  {data}")
 
-# Calculate the timestamp for one hour ago from the current time
-end_time = datetime.datetime.now()  # Current time
-start_time = end_time - datetime.timedelta(hours=1)
-
-# Convert the timestamps to milliseconds since epoch (Unix timestamp)
-start_time_ms = int(start_time.timestamp() * 1000)
-end_time_ms = int(end_time.timestamp() * 1000)
-# Seek to the starting offset based on the timestamp
-# consumer.seek(kafka_topic, consumer.poll(1.0).partition(), start_time_ms)
-
-def prediction_res(data_responses,window_size,stat):
-    model = keras.models.load_model('conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
+def prediction_res(data_responses):
+    window_size = WINDOW_SIZE
     converter_np_array = np.zeros((0, 3))
 
     len_BHE = len(data_responses["BHE"])
@@ -86,17 +80,20 @@ def prediction_res(data_responses,window_size,stat):
             data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
             prediction_array = np.vstack((prediction_array, data_row))
         
+    
         # normalisasi data
         normalize_data_array = normalize_data(prediction_array)
         # print(normalize_data_array)
         # input ke model 
+
         normalize_data_array = normalize_data_array.reshape(1, WINDOW_SIZE,3)
-        predictions = model.predict(normalize_data_array,verbose=0)
+        # predictions = model.predict(normalize_data_array,verbose=0)
+        # predictions = 1.0
 
         # hasil prediksi
         prediction_result = "No Earthquake."
-        if predictions[0][0] > 0.5:
-            prediction_result = "WARNING EARTHQUAKE !!"
+        # if predictions[0][0] > 0.5:
+        #     prediction_result = "WARNING EARTHQUAKE !!"
         
         # log hasil prediksi 
         # log_data(data=f'Prediction for Block {i} : {prediction_result}', stat=f"Result {stat.decode('utf-8')}")
@@ -105,6 +102,10 @@ def prediction_res(data_responses,window_size,stat):
         block_prediction = np.array([f"Prediction Block : {i}", f"Prediction Result : {prediction_result} !!"])
         np_array_with_prediction = np.vstack((np_array_with_prediction, block_prediction))
 
+
+    print("Result...")
+    log_data(stat="DATA ID",data=f'ID : {data_responses["id"]}') 
+    log_data(stat="TIME",data=f'start time : {data_responses["start_time"]}, end time : {data_responses["end_time"]}') 
     log_data(data=f'Shortest Channel length : {min_len_channel}', stat="Min Channel")
     return np_array_with_prediction
 
@@ -112,27 +113,35 @@ def normalize_data(data: np.ndarray):
     data = np.insert(np.diff(data, axis=0), 0, np.zeros((1, 3)), axis=0)
     return (data - np.mean(data, axis=0)) / np.std(data,axis=0)
 
-while True:
-    msg = consumer.poll(1.0)
-    if msg is None:
-        continue
-    if msg.error():
-        if msg.error().code() == KafkaError._PARTITION_EOF:
-            print(f'Reached end of partition for topic {msg.topic()} [{msg.partition()}]')
-        else:
-            print(f'Error while consuming message: {msg.error()}')
-    else:
-        # Process the received message
-        partition_key = msg.key()
-        print(f'Partition : {msg.partition()}')
-        print(f'Message Key: {partition_key.decode("utf-8")}')
-        jsonResponse = json.loads(msg.value().decode('utf-8'))
-        log_data(stat="TIME",data=f'data-fetc start time : {jsonResponse["start_time"]}, data-fetch end time : {jsonResponse["end_time"]}')        
-        log_data(stat=partition_key.decode("utf-8"),data=f'Received message BHE len: {len(jsonResponse["BHE"])}')
-        log_data(stat=partition_key.decode("utf-8"),data=f'Received message BHN len: {len(jsonResponse["BHN"])}')
-        log_data(stat=partition_key.decode("utf-8"),data=f'Received message BHZ len: {len(jsonResponse["BHZ"])}')
-        
-        # preprocessing
-        data_val_prediction = prediction_res(jsonResponse,WINDOW_SIZE,stat=partition_key)
-        # normalize_data_array = normalize_data(data_val)
-        print(data_val_prediction)
+
+if __name__ == "__main__":
+    num_processes = 3
+    consumer = Consumer(kafka_config)
+    consumer.subscribe([kafka_topic])
+
+    pool = multiprocessing.Pool(processes=num_processes)
+
+    while True:
+        messages = []  # Collect Kafka messages to process in parallel
+
+        # Collect a batch of messages
+        while len(messages) < num_processes:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    print(f'Reached end of partition for topic {msg.topic()} [{msg.partition()}]')
+                else:
+                    print(f'Error while consuming message: {msg.error()}')
+            else:
+                json_msg = json.loads(msg.value().decode('utf-8'))
+                # partition_key = msg.key().decode('utf-8')
+                messages.append(json_msg)
+
+        if messages:
+            # Process the received messages in parallel using pool.map
+            results = pool.map(prediction_res, messages)
+
+            # Handle results as needed
+            print(results)

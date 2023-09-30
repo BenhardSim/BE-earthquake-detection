@@ -66,7 +66,7 @@ end_time_ms = int(end_time.timestamp() * 1000)
 # Seek to the starting offset based on the timestamp
 # consumer.seek(kafka_topic, consumer.poll(1.0).partition(), start_time_ms)
 
-model = keras.models.load_model('conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
+model = keras.models.load_model('../tensorflow_model/conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
 
 def prediction_res(data_responses,window_size,stat):
     model = keras.models.load_model('conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')

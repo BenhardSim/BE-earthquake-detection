@@ -5,12 +5,20 @@ import multiprocessing
 import certifi
 import uuid
 import configparser
-import datetime
+from datetime import datetime, timedelta
 import json
 import numpy as np
 import logging
+import firebase_admin
+from firebase_admin import db, credentials
 
 unique_group_id = f'my-consumer-group-{str(uuid.uuid4())}'
+
+cred = credentials.Certificate('credentials.json')
+firebase_admin.initialize_app(cred , {"databaseURL" : "https://prediction-data-29321-default-rtdb.asia-southeast1.firebasedatabase.app/"})
+
+ref = db.reference("/")
+
 
 # Create a ConfigParser instance
 config = configparser.ConfigParser()
@@ -37,7 +45,7 @@ kafka_config = {
 # Hyper Parameter
 WINDOW_SIZE = 80
 # Machine Learning Model
-model = keras.models.load_model('conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
+model = keras.models.load_model('./tensorflow_model/conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
 
 # connect ke confluen kafka
 consumer = Consumer(kafka_config)
@@ -59,6 +67,9 @@ def prediction_res(data_responses):
 
     min_len_channel = min(len_BHE,min(len_BHZ,len_BHN))
 
+    data_start_time = data_responses['start_time']
+    data_end_time = data_responses['end_time']
+    
     for i in range(0,min_len_channel):
         BHE_channel = data_responses["BHE"][i]
         BHN_channel = data_responses["BHN"][i]
@@ -66,7 +77,14 @@ def prediction_res(data_responses):
         data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
         converter_np_array = np.vstack((converter_np_array, data_row))
 
-    np_array_with_prediction = np.zeros((0, 2))
+    # STAT - START_TIME - END_TIME - Prediction
+    np_array_with_prediction = np.zeros((0, 3))
+    channel_time_stamp = np.array([data_responses['stat'],f"start-time : {data_responses['start_time']}", f"end-time : {data_responses['end_time']}"])
+
+    # np_array_with_prediction = np.vstack((np_array_with_prediction, channel_time_stamp))
+    
+    utc_datetime_start_time = datetime.strptime(data_start_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    utc_datetime_end_time = datetime.strptime(data_end_time, "%Y-%m-%dT%H:%M:%S.%fZ")
 
     for i in range(0,min_len_channel-window_size+1):
         # blok np array yang akan berisi 120 baris data yang akan dimasukkan ke model ML
@@ -80,23 +98,26 @@ def prediction_res(data_responses):
             data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
             prediction_array = np.vstack((prediction_array, data_row))
         
+    
         # normalisasi data
         normalize_data_array = normalize_data(prediction_array)
-        # print(normalize_data_array)
         # input ke model 
+
         normalize_data_array = normalize_data_array.reshape(1, WINDOW_SIZE,3)
-        predictions = model.predict(normalize_data_array,verbose=0)
+        # predictions = model.predict(normalize_data_array,verbose=0)
+        # predictions = 1.0
 
         # hasil prediksi
         prediction_result = "No Earthquake."
-        if predictions[0][0] > 0.5:
-            prediction_result = "WARNING EARTHQUAKE !!"
-        
-        # log hasil prediksi 
-        # log_data(data=f'Prediction for Block {i} : {prediction_result}', stat=f"Result {stat.decode('utf-8')}")
-
+        # if predictions[0][0] > 0.5:
+        #     prediction_result = "WARNING EARTHQUAKE !!"
+ 
         # simpan kedalam database
-        block_prediction = np.array([f"Prediction Block : {i}", f"Prediction Result : {prediction_result} !!"])
+        time_interval = timedelta(microseconds=i*50000)
+        # block_prediction = np.array([f"<{data_responses['stat']}> Prediction Block : {i} time-stamp : {utc_datetime_start_time + time_interval}", f"Prediction Result : {prediction_result} !!"])
+        prediction_timestamp = utc_datetime_start_time + time_interval
+        prediction_timestamp_string = prediction_timestamp.isoformat()
+        block_prediction = np.array([data_responses['stat'],prediction_timestamp_string,prediction_result])
         np_array_with_prediction = np.vstack((np_array_with_prediction, block_prediction))
 
 
@@ -139,5 +160,36 @@ if __name__ == "__main__":
         if messages:
             # Process the received messages in parallel using pool.map
             results = pool.map(prediction_res, messages)
+
             # Handle results as needed
-            print(results)
+            # print(results)
+            # [[STAT , START , Prediction]]
+            JAGI_Array = np.zeros((0, 3))
+            BBJI_Array = np.zeros((0, 3))
+            SMRI_Array = np.zeros((0, 3))
+
+            for index, predic_res in enumerate(results) :
+                # print(predic_res[index][0])
+                if predic_res[index][0] == "JAGI" :
+                    JAGI_Array = np.vstack((JAGI_Array, predic_res))
+                elif predic_res[index][0] == "BBJI" :
+                    BBJI_Array = np.vstack((BBJI_Array, predic_res))
+                elif predic_res[index][0] == "SMRI" :
+                    SMRI_Array = np.vstack((SMRI_Array, predic_res))
+
+
+            print(len(JAGI_Array))
+            print(JAGI_Array)
+            print(len(BBJI_Array))
+            print(BBJI_Array)
+            print(len(SMRI_Array))
+            print(SMRI_Array)
+
+            data_to_db = {
+                'JAGI' : JAGI_Array.tolist(),
+                'BBJI' : BBJI_Array.tolist(),
+                'SMRI' : SMRI_Array.tolist()
+            }
+
+            # Use the push method to add data (creates a new unique key)
+            new_record_ref = ref.push(data_to_db)
