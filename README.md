@@ -1,4 +1,5 @@
-# BE-earthquake-detection
+# (DEPRECETED WILL UPDATE SOON :) )
+# BE-earthquake-detection 
 Created By : *Benhard Sim*
 
 ## HOW TO PRODUCE DATA
