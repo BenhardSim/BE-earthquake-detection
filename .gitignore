@@ -1,3 +1,4 @@
 kafka_config.txt
 /venv-jupesobspy
 /confluent
+credentials.json
