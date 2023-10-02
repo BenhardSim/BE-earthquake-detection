@@ -19,32 +19,13 @@
     <tbody>
       <!-- Table rows will be dynamically added here -->
     </tbody>
-  </table>
+  </table>z
 
   <script>
     const socket = io();
     const dataTable = document.getElementById('dataTable').querySelector('tbody');
 
-  // Object.keys(data_test).forEach((key) => {
-  //       const value = data_test[key];
-
-  //       const row = document.createElement('tr');
-  //       const idCell = document.createElement('td');
-  //       const nameCell = document.createElement('td');
-
-  //       idCell.textContent = key.toString();
-  //       nameCell.textContent = value.toString();
-
-  //       // Add more cells for additional data fields if needed
-
-  //       row.appendChild(idCell);
-  //       row.appendChild(nameCell);
-  //       // Append additional cells to the row if needed
-
-  //       dataTable.appendChild(row);
-  //       console.log(key, value);
-  //     });
-
+    const test_data = {}
     socket.on('data-update', (data) => {
       // Clear existing rows
       dataTable.innerHTML = '';
@@ -67,25 +48,25 @@
       //   dataTable.appendChild("row");
       // });
 
-      // Object.keys(data).forEach((key) => {
-      //   const value = data[key];
+      Object.keys(data).forEach((key) => {
+        const value = data[key];
 
-      //   const row = document.createElement('tr');
-      //   const idCell = document.createElement('td');
-      //   const nameCell = document.createElement('td');
+        const row = document.createElement('tr');
+        const idCell = document.createElement('td');
+        const nameCell = document.createElement('td');
 
-      //   idCell.textContent = key.toString();
-      //   nameCell.textContent = value.toString();
+        idCell.textContent = key.toString();
+        nameCell.textContent = value.toString();
 
-      //   // Add more cells for additional data fields if needed
+        // Add more cells for additional data fields if needed
 
-      //   row.appendChild(idCell);
-      //   row.appendChild(nameCell);
-      //   // Append additional cells to the row if needed
+        row.appendChild(idCell);
+        row.appendChild(nameCell);
+        // Append additional cells to the row if needed
 
-      //   dataTable.appendChild(row);
-      //   console.log(key, value);
-      // });
+        dataTable.appendChild(row);
+        console.log(key, value);
+      });
 
     });
   </script>
