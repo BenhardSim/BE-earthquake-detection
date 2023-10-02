@@ -28,6 +28,8 @@ config = configparser.ConfigParser()
 # Load the configuration from the file
 config.read('kafka_config.txt')
 
+jakarta_timezone = pytz.timezone('Asia/Jakarta')
+
 bootstrap_servers = config.get('KafkaConfig', 'bootstrap.servers')
 sasl_username = config.get('KafkaConfig', 'sasl.username')
 sasl_password = config.get('KafkaConfig', 'sasl.password')
@@ -71,6 +73,7 @@ def fetch_data(station_name):
     while True:
         try:
             # Mengambil waktu saat ini
+            start_fetch_time = time.time()
             utc_time = datetime.now(pytz.UTC)
             formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
             starttime = UTCDateTime(formatted_time) 
@@ -95,7 +98,7 @@ def fetch_data(station_name):
                 # interval detik data yang diambil
                 time_interval = int(time_to_seconds(ch.stats.endtime)) - int(time_to_seconds(ch.stats.starttime))
                 log_data(stat=station_name,data=f"Data ID : {value['id']}")
-                log_data(stat=station_name,data=f"from {ch.stats.starttime} to {ch.stats.endtime}")
+                log_data(stat=station_name,data=f"from {ch.stats.starttime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)} to {ch.stats.endtime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)}")
                 log_data(stat=station_name,data=f"Time interval of the collected data : {time_interval} seconds")
                 log_data(stat=station_name,data=f'Waves Produced lenght : <{len(ch.data)}>')
                 if smallest_channel_length > len(ch.data):
@@ -106,7 +109,9 @@ def fetch_data(station_name):
             JSON_value = json.dumps(value)
             producer.produce(kafka_topic, key=station_name, value=JSON_value,callback=acked)
             log_data(stat=station_name,data=f'Waves Produced succesfully')
-            process_time = 25
+            end_fetch_time = time.time()
+            process_time = end_fetch_time - start_fetch_time
+            log_data(stat=station_name,data=f'Process time {process_time}')
             time.sleep(60-process_time)
 
         except KeyboardInterrupt:

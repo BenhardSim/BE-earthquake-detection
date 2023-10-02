@@ -57,6 +57,15 @@ consumer.subscribe([kafka_topic])
 def log_data(data, type="LOG",stat="-"):
     print(f"[+] <{stat}> <{type}>  {data}")
 
+# Check if CUDA GPU is available
+if tf.test.is_gpu_available():
+    print("CUDA GPU is available.")
+    # Additional GPU information
+    gpu_device_name = tf.test.gpu_device_name()
+    print(f"GPU Device Name: {gpu_device_name}")
+else:
+    print("CUDA GPU is not available.")
+
 def prediction_res(data_responses):
     window_size = WINDOW_SIZE
     converter_np_array = np.zeros((0, 3))
@@ -104,13 +113,13 @@ def prediction_res(data_responses):
         # input ke model 
 
         normalize_data_array = normalize_data_array.reshape(1, WINDOW_SIZE,3)
-        # predictions = model.predict(normalize_data_array,verbose=0)
+        predictions = model.predict(normalize_data_array,verbose=0)
         # predictions = 1.0
 
         # hasil prediksi
         prediction_result = "No Earthquake."
-        # if predictions[0][0] > 0.5:
-        #     prediction_result = "WARNING EARTHQUAKE !!"
+        if predictions[0][0] > 0.5:
+            prediction_result = "WARNING EARTHQUAKE !!"
  
         # simpan kedalam database
         time_interval = timedelta(microseconds=i*50000)
