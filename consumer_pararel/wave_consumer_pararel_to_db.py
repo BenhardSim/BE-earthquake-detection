@@ -178,7 +178,6 @@ if __name__ == "__main__":
             SMRI_Array = np.zeros((0, 3))
 
             for index, predic_res in enumerate(results) :
-                # print(predic_res[index][0])
                 if predic_res[index][0] == "JAGI" :
                     JAGI_Array = np.vstack((JAGI_Array, predic_res))
                 elif predic_res[index][0] == "BBJI" :
@@ -206,6 +205,6 @@ if __name__ == "__main__":
             try:
                 # Use the push method to add data (creates a new unique key)
                 new_record_ref = ref.push(data_to_db)
-                print("Data pushed successfully with key:", new_record_ref.key)
+                print("Data pushed to Database successfully with key:", new_record_ref.key)
             except Exception as e:
                 print("Error pushing data:", e)
