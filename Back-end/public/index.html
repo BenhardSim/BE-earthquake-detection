@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Data Table</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+</head>
+<body>
+  <h1>Data Table</h1>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <!-- Add more headers for your data fields -->
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Table rows will be dynamically added here -->
+    </tbody>
+  </table>
+
+  <script>
+    const socket = io();
+    const dataTable = document.getElementById('dataTable').querySelector('tbody');
+
+  // Object.keys(data_test).forEach((key) => {
+  //       const value = data_test[key];
+
+  //       const row = document.createElement('tr');
+  //       const idCell = document.createElement('td');
+  //       const nameCell = document.createElement('td');
+
+  //       idCell.textContent = key.toString();
+  //       nameCell.textContent = value.toString();
+
+  //       // Add more cells for additional data fields if needed
+
+  //       row.appendChild(idCell);
+  //       row.appendChild(nameCell);
+  //       // Append additional cells to the row if needed
+
+  //       dataTable.appendChild(row);
+  //       console.log(key, value);
+  //     });
+
+    socket.on('data-update', (data) => {
+      // Clear existing rows
+      dataTable.innerHTML = '';
+      console.log(data);
+      // Loop through the received data and add rows to the table
+      // data.forEach((item) => {
+      //   const row = document.createElement('tr');
+      //   const idCell = document.createElement('td');
+      //   const nameCell = document.createElement('td');
+
+      //   idCell.textContent = item.id;
+      //   nameCell.textContent = item.name;
+
+      //   // Add more cells for additional data fields if needed
+
+      //   row.appendChild(idCell);
+      //   row.appendChild(nameCell);
+      //   // Append additional cells to the row if needed
+
+      //   dataTable.appendChild("row");
+      // });
+
+      // Object.keys(data).forEach((key) => {
+      //   const value = data[key];
+
+      //   const row = document.createElement('tr');
+      //   const idCell = document.createElement('td');
+      //   const nameCell = document.createElement('td');
+
+      //   idCell.textContent = key.toString();
+      //   nameCell.textContent = value.toString();
+
+      //   // Add more cells for additional data fields if needed
+
+      //   row.appendChild(idCell);
+      //   row.appendChild(nameCell);
+      //   // Append additional cells to the row if needed
+
+      //   dataTable.appendChild(row);
+      //   console.log(key, value);
+      // });
+
+    });
+  </script>
+</body>
+</html>

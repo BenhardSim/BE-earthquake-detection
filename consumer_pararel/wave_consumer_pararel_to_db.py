@@ -193,3 +193,10 @@ if __name__ == "__main__":
 
             # Use the push method to add data (creates a new unique key)
             new_record_ref = ref.push(data_to_db)
+
+            try:
+                # Use the push method to add data (creates a new unique key)
+                new_record_ref = ref.push(data_to_db)
+                print("Data pushed successfully with key:", new_record_ref.key)
+            except Exception as e:
+                print("Error pushing data:", e)

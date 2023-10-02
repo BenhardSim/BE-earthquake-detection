@@ -9,3 +9,4 @@ uuid
 certifi
 configparser
 tensorflow
+firebase_admin
