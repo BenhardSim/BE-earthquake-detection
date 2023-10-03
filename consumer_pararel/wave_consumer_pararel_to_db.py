@@ -15,9 +15,10 @@ from firebase_admin import db, credentials
 unique_group_id = f'my-consumer-group-{str(uuid.uuid4())}'
 
 cred = credentials.Certificate('credentials.json')
-firebase_admin.initialize_app(cred , {"databaseURL" : "https://prediction-data-29321-default-rtdb.asia-southeast1.firebasedatabase.app/"})
+firebase_admin.initialize_app(cred , 
+                              {"databaseURL" : "https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/"})
 
-ref = db.reference("/")
+ref = db.reference("/prediction")
 
 
 # Create a ConfigParser instance
@@ -198,9 +199,6 @@ if __name__ == "__main__":
                 'BBJI' : BBJI_Array.tolist(),
                 'SMRI' : SMRI_Array.tolist()
             }
-
-            # Use the push method to add data (creates a new unique key)
-            new_record_ref = ref.push(data_to_db)
 
             try:
                 # Use the push method to add data (creates a new unique key)

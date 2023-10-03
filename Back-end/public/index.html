@@ -30,23 +30,6 @@
       // Clear existing rows
       dataTable.innerHTML = '';
       console.log(data);
-      // Loop through the received data and add rows to the table
-      // data.forEach((item) => {
-      //   const row = document.createElement('tr');
-      //   const idCell = document.createElement('td');
-      //   const nameCell = document.createElement('td');
-
-      //   idCell.textContent = item.id;
-      //   nameCell.textContent = item.name;
-
-      //   // Add more cells for additional data fields if needed
-
-      //   row.appendChild(idCell);
-      //   row.appendChild(nameCell);
-      //   // Append additional cells to the row if needed
-
-      //   dataTable.appendChild("row");
-      // });
 
       Object.keys(data).forEach((key) => {
         const value = data[key];
