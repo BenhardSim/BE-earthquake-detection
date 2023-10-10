@@ -11,6 +11,7 @@ import numpy as np
 import logging
 import firebase_admin
 from firebase_admin import db, credentials
+import time
 
 unique_group_id = f'my-consumer-group-{str(uuid.uuid4())}'
 
@@ -46,13 +47,13 @@ kafka_config = {
 # Hyper Parameter
 WINDOW_SIZE = 80
 # Machine Learning Model
-model = keras.models.load_model('./tensorflow_model/conv1d_lstm_window4.0s_20hz_diff_then_scale_window_diff_and_scaling_v2.h5')
+model = keras.models.load_model('./tensorflow_model/window_4second_v1.h5')
 
 # connect ke confluen kafka
 consumer = Consumer(kafka_config)
 
 # mensbscribe kafka topic 
-kafka_topic = 'wave_station_v3' 
+kafka_topic = config.get('KafkaConfig', 'kafka.topic') 
 consumer.subscribe([kafka_topic])
 
 def log_data(data, type="LOG",stat="-"):
@@ -96,6 +97,12 @@ def prediction_res(data_responses):
     utc_datetime_start_time = datetime.strptime(data_start_time, "%Y-%m-%dT%H:%M:%S.%fZ")
     utc_datetime_end_time = datetime.strptime(data_end_time, "%Y-%m-%dT%H:%M:%S.%fZ")
 
+    total_prediction_a_minute = min_len_channel-window_size+1
+
+    
+    #start Precition time for 60 second
+    start_predict_time = time.time()
+
     for i in range(0,min_len_channel-window_size+1):
         # blok np array yang akan berisi 120 baris data yang akan dimasukkan ke model ML
         prediction_array = np.zeros((0, 3))
@@ -114,14 +121,14 @@ def prediction_res(data_responses):
         # input ke model 
 
         normalize_data_array = normalize_data_array.reshape(1, WINDOW_SIZE,3)
-        predictions = model.predict(normalize_data_array,verbose=0)
+        # predictions = model.predict(normalize_data_array,verbose=0)
         # predictions = 1.0
 
         # hasil prediksi
         prediction_result = "No Earthquake."
-        if predictions[0][0] > 0.5:
-            prediction_result = "WARNING EARTHQUAKE !!"
- 
+        # if predictions[0][0] > 0.5:
+        #     prediction_result = "WARNING EARTHQUAKE !!"
+       
         # simpan kedalam database
         time_interval = timedelta(microseconds=i*50000)
         # block_prediction = np.array([f"<{data_responses['stat']}> Prediction Block : {i} time-stamp : {utc_datetime_start_time + time_interval}", f"Prediction Result : {prediction_result} !!"])
@@ -130,8 +137,13 @@ def prediction_res(data_responses):
         block_prediction = np.array([data_responses['stat'],prediction_timestamp_string,prediction_result])
         np_array_with_prediction = np.vstack((np_array_with_prediction, block_prediction))
 
+    #end Precition time for 60 second
+    end_predict_time = time.time()
 
     print("Result...")
+    prdiction_process_time = end_predict_time - start_predict_time
+    log_data(stat="PL",data=f'Prediction Length for 60 seconds : {total_prediction_a_minute}') 
+    log_data(stat="PT",data=f'Prediction Time for 60 seconds : {prdiction_process_time}') 
     log_data(stat="DATA ID",data=f'ID : {data_responses["id"]}') 
     log_data(stat="TIME",data=f'start time : {data_responses["start_time"]}, end time : {data_responses["end_time"]}') 
     log_data(data=f'Shortest Channel length : {min_len_channel}', stat="Min Channel")

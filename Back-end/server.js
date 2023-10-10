@@ -12,7 +12,7 @@ const cors = require('cors');
 admin.initializeApp(
   {
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: 'https://prediction-data-29321-default-rtdb.asia-southeast1.firebasedatabase.app/', // Replace with your Firebase project URL
+    databaseURL: 'https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/', // Replace with your Firebase project URL
   }
 );
 
@@ -25,7 +25,7 @@ io.on('connection', (socket) => {
   console.log('A client connected.');
 
   // Listen for changes in your Firebase database and emit updates to connected clients
-  const ref = db.ref('/');
+  const ref = db.ref('/prediction');
   ref.on('value', (snapshot) => {
     const data = snapshot.val();
     console.log(data)
