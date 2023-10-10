@@ -26,7 +26,7 @@
     const dataTable = document.getElementById('dataTable').querySelector('tbody');
 
     const test_data = {}
-    socket.on('data-update', (data) => {
+    socket.on('waves-data-JAGI', (data) => {
       // Clear existing rows
       dataTable.innerHTML = '';
       console.log(data);

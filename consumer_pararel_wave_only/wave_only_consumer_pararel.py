@@ -18,7 +18,7 @@ cred = credentials.Certificate('credentials.json')
 firebase_admin.initialize_app(cred , 
                               {"databaseURL" : "https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/"})
 
-ref = db.reference("/waves")
+
 
 
 # Create a ConfigParser instance
@@ -47,7 +47,7 @@ kafka_config = {
 consumer = Consumer(kafka_config)
 
 # mensbscribe kafka topic 
-kafka_topic = 'wave_station_v3' 
+kafka_topic = config.get('KafkaConfig', 'kafka.topic') 
 consumer.subscribe([kafka_topic])
 
 def log_data(data, type="LOG",stat="-"):
@@ -69,11 +69,14 @@ def prediction_res(data_responses):
         data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
         converter_np_array = np.vstack((converter_np_array, data_row))
 
-    print("Result...")
+    print(f"Result {data_responses['stat']}...")
     log_data(stat="DATA ID",data=f'ID : {data_responses["id"]}') 
     log_data(stat="TIME",data=f'start time : {data_responses["start_time"]}, end time : {data_responses["end_time"]}') 
     log_data(data=f'Shortest Channel length : {min_len_channel}', stat="Min Channel")
-    return converter_np_array.tolist()
+    result_dict = {}
+    result_dict["stat"] = data_responses['stat']
+    result_dict["data"] = converter_np_array
+    return result_dict
 
 if __name__ == "__main__":
     num_processes = 3
@@ -83,6 +86,10 @@ if __name__ == "__main__":
     pool = multiprocessing.Pool(processes=num_processes)
 
     while True:
+        # ref = db.reference("/waves")
+        ref_JAGI = db.reference("/waves/JAGI")
+        ref_SMRI = db.reference("/waves/SMRI")
+        ref_BBJI = db.reference("/waves/BBJI")
         messages = []  # Collect Kafka messages to process in parallel
 
         # Collect a batch of messages
@@ -106,7 +113,23 @@ if __name__ == "__main__":
 
             try:
                 # Use the push method to add data (creates a new unique key)
-                new_record_ref = ref.push(wave_result)
-                print("Data pushed to Database successfully with key:", new_record_ref.key)
+                print(wave_result[0])
+                print(wave_result[1])
+                print(wave_result[2])
+
+                for index, predic_res in enumerate(wave_result):
+                    if wave_result[index]["stat"] == "JAGI":
+                        data_wave = wave_result[index]["data"].tolist()
+                        new_record_ref = ref_JAGI.push(data_wave)
+                        print("Data pushed to Database JAGI successfully with key:", new_record_ref.key)
+                    elif wave_result[index]["stat"] == "SMRI":
+                        data_wave = wave_result[index]["data"].tolist()
+                        new_record_ref = ref_SMRI.push(data_wave)
+                        print("Data pushed to Database SMRI successfully with key:", new_record_ref.key)
+                    elif wave_result[index]["stat"] == "BBJI":
+                        data_wave = wave_result[index]["data"].tolist()
+                        new_record_ref = ref_BBJI.push(data_wave)
+                        print("Data pushed to Database BBJI successfully with key:", new_record_ref.key)
+
             except Exception as e:
                 print("Error pushing data:", e)

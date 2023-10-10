@@ -12,16 +12,16 @@ const cors = require('cors');
 admin.initializeApp(
   {
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: 'https://prediction-data-29321-default-rtdb.asia-southeast1.firebasedatabase.app/', // Replace with your Firebase project URL
+    databaseURL: 'https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/', // Replace with your Firebase project URL
   }
 );
 
 
 // Create a reference to your Firebase Realtime Database
 const db = admin.database();
-const ref = db.ref('/');
-var startChild = "-NfW6M7RbMF3zcF3FSt_";
-var batchSize = 100;
+const ref = db.ref('/prediction');
+var startChild = "BBJI";
+var batchSize = 10;
 
 function deleteNextBatch() {
   ref.orderByKey()

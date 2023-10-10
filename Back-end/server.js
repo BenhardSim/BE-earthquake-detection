@@ -25,17 +25,70 @@ io.on('connection', (socket) => {
   console.log('A client connected.');
 
   // Listen for changes in your Firebase database and emit updates to connected clients
-  const ref = db.ref('/prediction');
-  ref.on('value', (snapshot) => {
+  const ref_prediction = db.ref('/prediction_all');
+  const ref_prediction_BBJI = db.ref('/prediction/BBJI')
+  const ref_prediction_SMRI = db.ref('/prediction/SMRI')
+  const ref_prediction_JAGI = db.ref('/prediction/JAGI')
+
+  const ref_waves = db.ref('/waves');
+  const ref_waves_BBJI = db.ref('/waves/BBJI')
+  const ref_waves_SMRI = db.ref('/waves/SMRI')
+  const ref_waves_JAGI = db.ref('/waves/JAGI')
+
+  ref_prediction.on('value', (snapshot) => {
     const data = snapshot.val();
     console.log(data)
-    socket.emit('data-update', data);
+    socket.emit('prediction-data-all', data);
   });
+
+  ref_prediction_BBJI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('prediction-data-BBJI', data);
+  })
+
+  ref_prediction_SMRI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('prediction-data-SMRI', data);
+  })
+
+  ref_prediction_JAGI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('prediction-data-JAGI', data);
+  })
+
+  // waves
+  ref_waves_BBJI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('waves-data-BBJI', data);
+  })
+
+  ref_waves_SMRI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('waves-data-SMRI', data);
+  })
+
+  ref_waves_JAGI.on('value', (snapshot) => {
+    const data = snapshot.val();
+    console.log(data)
+    socket.emit('waves-data-JAGI', data);
+  })
 
   // Handle socket disconnect
   socket.on('disconnect', () => {
     console.log('A client disconnected.');
-    ref.off(); // Stop listening to database changes for this client
+    ref_prediction.off(); // Stop listening to database changes for this client
+    ref_prediction_BBJI.off();
+    ref_prediction_SMRI.off();
+    ref_prediction_JAGI.off();
+
+    ref_waves_BBJI.off();
+    ref_waves_SMRI.off();
+    ref_waves_JAGI.off();
   });
 });
 

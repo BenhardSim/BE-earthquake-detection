@@ -52,8 +52,15 @@ kafka_topic = config.get('KafkaConfig', 'kafka.topic')
 # menggunakan Producer dengan memasukkan kafka_config
 producer = Producer(kafka_config)
 
+# merupakan window size untuk machine learning
+# variable ini juga berguna untuk menyesuaikan panjang detik tambahan untuk interval data yang di butuhkan
 WINDOW_SECOND = 4
-BATCH_SIZE = 60
+# merupakan besar interval waktu dalam satuan detik besar data yang di ambil dari sensor
+# untuk setiap satu detik data yang dihasilkan adalah sebesar 20 data 
+BATCH_SIZE = 40
+# fetch data merupakan variable yang bergunka untuk memberikan waktu sleep atau jeda untuk setiap 
+# data fetch ke stasiun 
+FETCH_DATA = 40
 
 def time_to_seconds(utc_date):
     hour = utc_date.hour
@@ -81,9 +88,10 @@ def fetch_data(station_name):
             start_fetch_time = time.time()
             utc_time = datetime.now(pytz.UTC)
             formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
-            starttime = UTCDateTime(formatted_time) 
-            endtime = starttime
-            st = client.get_waveforms("GE", station_name, "*", "BH*", starttime - (60 + WINDOW_SECOND + missing_time), endtime)
+            time_fetch = UTCDateTime(formatted_time)
+            # besar interval waktu yang akan di fetch ke stasiun
+            interval_time = BATCH_SIZE + WINDOW_SECOND + missing_time
+            st = client.get_waveforms("GE", station_name, "*", "BH*", time_fetch - interval_time, time_fetch)
             value = {}
             value["stat"] = station_name
 
@@ -125,7 +133,7 @@ def fetch_data(station_name):
             end_fetch_time = time.time()
             process_time = end_fetch_time - start_fetch_time
             log_data(stat=station_name,data=f'Process time {process_time}')
-            time.sleep(60-process_time)
+            time.sleep(FETCH_DATA-process_time)
 
         except KeyboardInterrupt:
             print("Keyboard interrupt received. Terminating processes.")
@@ -138,8 +146,8 @@ def fetch_data(station_name):
             time.sleep(2)
 
 
-# station_names = ["JAGI", "BBJI","SMRI"]
-station_names = ["JAGI"]
+station_names = ["JAGI", "BBJI","SMRI"]
+# station_names = ["JAGI"]
 if __name__ == "__main__":
     while True:
         with multiprocessing.Pool(processes=len(station_names)) as pool:

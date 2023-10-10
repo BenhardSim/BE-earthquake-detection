@@ -19,7 +19,7 @@ cred = credentials.Certificate('credentials.json')
 firebase_admin.initialize_app(cred , 
                               {"databaseURL" : "https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/"})
 
-ref = db.reference("/prediction")
+
 
 
 # Create a ConfigParser instance
@@ -47,7 +47,7 @@ kafka_config = {
 # Hyper Parameter
 WINDOW_SIZE = 80
 # Machine Learning Model
-model = keras.models.load_model('./tensorflow_model/window_4second_v1.h5')
+model = keras.models.load_model('./tensorflow_model/window_4second_v2.h5')
 
 # connect ke confluen kafka
 consumer = Consumer(kafka_config)
@@ -140,7 +140,7 @@ def prediction_res(data_responses):
     #end Precition time for 60 second
     end_predict_time = time.time()
 
-    print("Result...")
+    print(f"Result {data_responses['stat']}...")
     prdiction_process_time = end_predict_time - start_predict_time
     log_data(stat="PL",data=f'Prediction Length for 60 seconds : {total_prediction_a_minute}') 
     log_data(stat="PT",data=f'Prediction Time for 60 seconds : {prdiction_process_time}') 
@@ -155,6 +155,12 @@ def normalize_data(data: np.ndarray):
 
 
 if __name__ == "__main__":
+
+    ref = db.reference("/prediction_all")
+    ref_JAGI = db.reference("/prediction/JAGI")
+    ref_SMRI = db.reference("/prediction/SMRI")
+    ref_BBJI = db.reference("/prediction/BBJI")
+
     num_processes = 3
     consumer = Consumer(kafka_config)
     consumer.subscribe([kafka_topic])
@@ -184,37 +190,50 @@ if __name__ == "__main__":
             results = pool.map(prediction_res, messages)
 
             # Handle results as needed
-            # print(results)
-            # [[STAT , START , Prediction]]
-            JAGI_Array = np.zeros((0, 3))
-            BBJI_Array = np.zeros((0, 3))
-            SMRI_Array = np.zeros((0, 3))
+            # DICTIONARY FORMAT
+            JAGI_Dic = {}
+            BBJI_Dic = {}
+            SMRI_Dic = {}
 
             for index, predic_res in enumerate(results) :
                 if predic_res[index][0] == "JAGI" :
-                    JAGI_Array = np.vstack((JAGI_Array, predic_res))
+                    # JAGI_Array = np.vstack((JAGI_Array, predic_res))
+                    JAGI_Dic["station"] = predic_res[index][0]
+                    JAGI_Dic["time_stamp"] = predic_res[index][1]
+                    JAGI_Dic["prediction"] = predic_res[index][2]
                 elif predic_res[index][0] == "BBJI" :
-                    BBJI_Array = np.vstack((BBJI_Array, predic_res))
+                    # BBJI_Array = np.vstack((BBJI_Array, predic_res))
+                    BBJI_Dic["station"] = predic_res[index][0]
+                    BBJI_Dic["time_stamp"] = predic_res[index][1]
+                    BBJI_Dic["prediction"] = predic_res[index][2]
                 elif predic_res[index][0] == "SMRI" :
-                    SMRI_Array = np.vstack((SMRI_Array, predic_res))
+                    # SMRI_Array = np.vstack((SMRI_Array, predic_res))
+                    SMRI_Dic["station"] = predic_res[index][0]
+                    SMRI_Dic["time_stamp"] = predic_res[index][1]
+                    SMRI_Dic["prediction"] = predic_res[index][2]
 
-
-            print(len(JAGI_Array))
-            print(JAGI_Array)
-            print(len(BBJI_Array))
-            print(BBJI_Array)
-            print(len(SMRI_Array))
-            print(SMRI_Array)
+            # print(len(JAGI_Array))
+            print(JAGI_Dic)
+            # print(len(BBJI_Array))
+            print(BBJI_Dic)
+            # print(len(SMRI_Array))
+            print(SMRI_Dic)
 
             data_to_db = {
-                'JAGI' : JAGI_Array.tolist(),
-                'BBJI' : BBJI_Array.tolist(),
-                'SMRI' : SMRI_Array.tolist()
+                'JAGI' : JAGI_Dic,
+                'BBJI' : BBJI_Dic,
+                'SMRI' : SMRI_Dic
             }
 
             try:
                 # Use the push method to add data (creates a new unique key)
                 new_record_ref = ref.push(data_to_db)
-                print("Data pushed to Database successfully with key:", new_record_ref.key)
+                new_record_ref_JAGI = ref_JAGI.push(JAGI_Dic)
+                new_record_ref_SMRI = ref_SMRI.push(SMRI_Dic)
+                new_record_ref_BBJI = ref_BBJI.push(BBJI_Dic)
+                print("Data pushed to Database all successfully with key:", new_record_ref.key)
+                print("Data pushed to Database JAGI successfully with key:", new_record_ref_JAGI.key)
+                print("Data pushed to Database SMRI successfully with key:", new_record_ref_SMRI.key)
+                print("Data pushed to Database BBJI successfully with key:", new_record_ref_BBJI.key)
             except Exception as e:
                 print("Error pushing data:", e)
