@@ -115,7 +115,7 @@ def fetch_data(station_name):
 
             # waktu dari data yang hilang
             missing_time = batch_size - smallest_channel_time
-            batch_size += missing_time
+            batch_size = BATCH_SIZE + WINDOW_SECOND + missing_time
             log_data(stat=station_name,data=f'missing time : {missing_time}')
             log_data(stat=station_name,data=f'smallest length channel time : {smallest_channel_time}')
 
