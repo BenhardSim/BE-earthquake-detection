@@ -63,28 +63,37 @@ def prediction_res(data_responses):
     min_len_channel = min(len_BHE,min(len_BHZ,len_BHN))
     data_start_time = data_responses["start_time"]
     utc_datetime_start_time = datetime.strptime(data_start_time, "%Y-%m-%dT%H:%M:%S.%fZ")
-    
-    for i in range(0,min_len_channel):
+    data_waves = {}
+
+    for i in range(20*4,min_len_channel):
         BHE_channel = data_responses["BHE"][i]
         BHN_channel = data_responses["BHN"][i]
         BHZ_channel = data_responses["BHZ"][i]
-
+        # index = data_responses["start_time"] + (0.05*i)
         time_interval = timedelta(microseconds=i*50000)
         waves_timestamp = utc_datetime_start_time + time_interval
+        waves_timestamp_string = waves_timestamp.strftime("%Y-%m-%d %H:%M:%S:%f")
+        data_waves[waves_timestamp_string] = {
+            "E" : BHE_channel,
+            "N" : BHN_channel,
+            "Z" : BHZ_channel
+        }
         data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
         converter_np_array = np.vstack((converter_np_array, data_row))
 
     print(f"Result {data_responses['stat']}...")
+    log_data(stat="LEN DATA",data=f'LEN : {min_len_channel}') 
     log_data(stat="DATA ID",data=f'ID : {data_responses["id"]}') 
     log_data(stat="TIME",data=f'start time : {data_responses["start_time"]}, end time : {data_responses["end_time"]}') 
     log_data(data=f'Shortest Channel length : {min_len_channel}', stat="Min Channel")
     result_dict = {}
+    data_waves["stat"] = data_responses['stat']
     result_dict["stat"] = data_responses['stat']
     result_dict["data"] = converter_np_array
-    return result_dict
+    return data_waves
 
 if __name__ == "__main__":
-    num_processes = 3
+    num_processes = 1
     consumer = Consumer(kafka_config)
     consumer.subscribe([kafka_topic])
 
@@ -117,22 +126,26 @@ if __name__ == "__main__":
             wave_result = pool.map(prediction_res, messages)
 
             try:
-                # Use the push method to add data (creates a new unique key)
+                json_string = json.dumps(wave_result)
                 print(wave_result[0])
-                print(wave_result[1])
-                print(wave_result[2])
+                # print(wave_result[1])
+                # print(wave_result[2])
+                # Use the push method to add data (creates a new unique key)
+                # print(wave_result[0])
+                # print(wave_result[1])
+                # print(wave_result[2])
 
                 for index, predic_res in enumerate(wave_result):
                     if wave_result[index]["stat"] == "JAGI":
-                        data_wave = wave_result[index]["data"].tolist()
+                        data_wave = wave_result[index]
                         new_record_ref = ref_JAGI.push(data_wave)
                         print("Data pushed to Database JAGI successfully with key:", new_record_ref.key)
                     elif wave_result[index]["stat"] == "SMRI":
-                        data_wave = wave_result[index]["data"].tolist()
+                        data_wave = wave_result[index]
                         new_record_ref = ref_SMRI.push(data_wave)
                         print("Data pushed to Database SMRI successfully with key:", new_record_ref.key)
                     elif wave_result[index]["stat"] == "BBJI":
-                        data_wave = wave_result[index]["data"].tolist()
+                        data_wave = wave_result[index]
                         new_record_ref = ref_BBJI.push(data_wave)
                         print("Data pushed to Database BBJI successfully with key:", new_record_ref.key)
 

@@ -3,7 +3,7 @@ import certifi
 from obspy.clients.fdsn import Client
 from obspy import UTCDateTime
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from obspy.clients.seedlink import Client as SeedlinkClient
 from obspy.clients.seedlink.easyseedlink import create_client
 import multiprocessing
@@ -109,16 +109,19 @@ def fetch_data(station_name):
                 value[ch.stats.channel] = ch.data.tolist()
                 log_data(stat=station_name,data=f"Data from {ch.stats.channel} fetch succesfully !!")
 
-                # interval detik data yang diambil
+                data_prediction_start_time = ch.stats.starttime + timedelta(seconds=4)
+
+                # interval detik data yang diambil  
                 time_interval = int(time_to_seconds(ch.stats.endtime)) - int(time_to_seconds(ch.stats.starttime))
                 log_data(stat=station_name,data=f"Data ID : {value['id']}")
-                log_data(stat=station_name,data=f"from {ch.stats.starttime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)} to {ch.stats.endtime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)}")
+                log_data(stat=station_name,data=f"data fetch from : {ch.stats.starttime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)} to {ch.stats.endtime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)}")
+                log_data(stat=station_name,data=f"data prediction from : {data_prediction_start_time.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)} to {ch.stats.endtime.datetime.replace(tzinfo=pytz.utc).astimezone(jakarta_timezone)}")
                 log_data(stat=station_name,data=f"Time interval of the collected data : {time_interval} seconds")
                 log_data(stat=station_name,data=f'Waves Produced lenght : <{len(ch.data)}>')
                 if smallest_channel_length > len(ch.data):
                     smallest_channel_length = len(ch.data)
                     smallest_channel_time = time_interval
-                    value["start_time"] = str(start_time)
+                    value["start_time"] = str(start_time + timedelta(seconds=4))
                     value["end_time"] = str(end_time)
 
             # waktu dari data yang hilang
@@ -146,8 +149,8 @@ def fetch_data(station_name):
             time.sleep(2)
 
 
-station_names = ["JAGI", "BBJI","SMRI"]
-# station_names = ["JAGI"]
+# station_names = ["JAGI", "BBJI","SMRI"]
+station_names = ["JAGI"]
 if __name__ == "__main__":
     while True:
         with multiprocessing.Pool(processes=len(station_names)) as pool:

@@ -19,8 +19,8 @@ admin.initializeApp(
 
 // Create a reference to your Firebase Realtime Database
 const db = admin.database();
-const ref = db.ref('/prediction');
-var startChild = "BBJI";
+const ref = db.ref('/waves');
+var startChild = "JAGI";
 var batchSize = 10;
 
 function deleteNextBatch() {
