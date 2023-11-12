@@ -138,21 +138,17 @@ def fetch_data(station_name):
             log_data(stat=station_name,data=f'Process time {process_time}')
             time.sleep(FETCH_DATA-process_time)
 
-        except KeyboardInterrupt:
-            print("Keyboard interrupt received. Terminating processes.")
-            pool.terminate()
-            pool.join()
-            print("Processes terminated.")
-
         except Exception as e:
             print(f"Error for station {station_name}: {str(e)}")
             time.sleep(2)
 
 
-# station_names = ["JAGI", "BBJI","SMRI"]
-station_names = ["JAGI","BBJI","SMRI"]
+station_names = "SMRI"
 if __name__ == "__main__":
     while True:
-        with multiprocessing.Pool(processes=len(station_names)) as pool:
-            pool.map(fetch_data, station_names)
-        
+        try:
+            print("Producing data...")
+            fetch_data(station_names)
+        except Exception as e:
+            print("No Trace Data\n")
+            print(f"Error: {str(e)}")

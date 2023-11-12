@@ -127,7 +127,7 @@ if __name__ == "__main__":
 
             try:
                 json_string = json.dumps(wave_result)
-                print(wave_result[0])
+                # print(wave_result[0])
                 # print(wave_result[1])
                 # print(wave_result[2])
                 # Use the push method to add data (creates a new unique key)

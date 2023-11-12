@@ -20,23 +20,23 @@ def error_cb(err):
 # Create a ConfigParser instance
 config = configparser.ConfigParser()
 # Load the configuration from the file
-config.read('../kafka_config.txt')
+# config.read('../kafka_config.txt')
 
-bootstrap_servers = config.get('KafkaConfig', 'bootstrap.servers')
-sasl_username = config.get('KafkaConfig', 'sasl.username')
-sasl_password = config.get('KafkaConfig', 'sasl.password')
+# bootstrap_servers = config.get('KafkaConfig', 'bootstrap.servers')
+# sasl_username = config.get('KafkaConfig', 'sasl.username')
+# sasl_password = config.get('KafkaConfig', 'sasl.password')
     
-# config untuk masuk ke akun confluent 
-kafka_config = {
-    'bootstrap.servers': bootstrap_servers, 
-    'sasl.mechanism': 'PLAIN',
-    'security.protocol': 'SASL_SSL',
-    'sasl.username': sasl_username,
-    'sasl.password': sasl_password,
-    "ssl.ca.location": certifi.where(),
-    'linger.ms': 100,
-    'error_cb': error_cb, 
-}
+# # config untuk masuk ke akun confluent 
+# kafka_config = {
+#     'bootstrap.servers': bootstrap_servers, 
+#     'sasl.mechanism': 'PLAIN',
+#     'security.protocol': 'SASL_SSL',
+#     'sasl.username': sasl_username,
+#     'sasl.password': sasl_password,
+#     "ssl.ca.location": certifi.where(),
+#     'linger.ms': 100,
+#     'error_cb': error_cb, 
+# }
 
 # anam topic pada confluent
 kafka_topic = 'WAVE_Station' 
@@ -45,7 +45,7 @@ kafka_topic = 'WAVE_Station'
 key_partition = "JAGI"
 
 # menggunakan Producer dengan memasukkan kafka_config
-producer = Producer(kafka_config)
+# producer = Producer(kafka_config)
 # seedlink untuk mengambil data dari stasiun sensor dengan realtime
 client = SeedlinkClient("geofon.gfz-potsdam.de", 18000)
 
@@ -69,6 +69,8 @@ def get_data_seed_link():
     endtime = starttime
     st = client.get_waveforms("GE", key_partition, "*", "BH*", starttime - 60, endtime)
     value = {}
+    print(f"ressult{st}")
+    # print(json.dumps(st))
 
     for ch in st:
         value[ch.stats.channel] = ch.data.tolist()
@@ -96,7 +98,7 @@ while True:
     try:
         print("Producing data...")
         values = get_data_seed_link()
-        producer.produce(kafka_topic, key=key_partition, value=values,callback=acked)
+        # producer.produce(kafka_topic, key=key_partition, value=values,callback=acked)
         log_data(f'Waves Produced succesfully')
         # time.sleep(3)
     except Exception as e:

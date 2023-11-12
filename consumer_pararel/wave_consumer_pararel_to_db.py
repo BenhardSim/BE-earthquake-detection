@@ -12,14 +12,13 @@ import logging
 import firebase_admin
 from firebase_admin import db, credentials
 import time
+import random
 
 unique_group_id = f'my-consumer-group-{str(uuid.uuid4())}'
 
 cred = credentials.Certificate('credentials.json')
 firebase_admin.initialize_app(cred , 
                               {"databaseURL" : "https://eews-pipeline-default-rtdb.asia-southeast1.firebasedatabase.app/"})
-
-
 
 
 # Create a ConfigParser instance
@@ -125,7 +124,12 @@ def prediction_res(data_responses):
         # predictions = 1.0
 
         # hasil prediksi
+        prediction = random.random() 
         prediction_result = "No Earthquake."
+        if(prediction > 0.6):
+            prediction_result = "WARNING EARTHQUAKE !!"
+            
+        
         # if predictions[0][0] > 0.5:
         #     prediction_result = "WARNING EARTHQUAKE !!"
        
@@ -191,39 +195,49 @@ if __name__ == "__main__":
 
             # Handle results as needed
             # DICTIONARY FORMAT
-            JAGI_Dic = {}
-            BBJI_Dic = {}
-            SMRI_Dic = {}
+            JAGI_Dic = []
+            BBJI_Dic = []
+            SMRI_Dic = []
 
             for index, predic_res in enumerate(results) :
-                if predic_res[index][0] == "JAGI" :
-                    # JAGI_Array = np.vstack((JAGI_Array, predic_res))
-                    JAGI_Dic["station"] = predic_res[index][0]
-                    JAGI_Dic["time_stamp"] = predic_res[index][1]
-                    JAGI_Dic["prediction"] = predic_res[index][2]
-                elif predic_res[index][0] == "BBJI" :
-                    # BBJI_Array = np.vstack((BBJI_Array, predic_res))
-                    BBJI_Dic["station"] = predic_res[index][0]
-                    BBJI_Dic["time_stamp"] = predic_res[index][1]
-                    BBJI_Dic["prediction"] = predic_res[index][2]
-                elif predic_res[index][0] == "SMRI" :
-                    # SMRI_Array = np.vstack((SMRI_Array, predic_res))
-                    SMRI_Dic["station"] = predic_res[index][0]
-                    SMRI_Dic["time_stamp"] = predic_res[index][1]
-                    SMRI_Dic["prediction"] = predic_res[index][2]
+                for data in predic_res:
+                    if data[0] == "JAGI" :
+                        # JAGI_Array = np.vstack((JAGI_Array, predic_res))
+                        JAGI_Dic_temp = {}
+                        JAGI_Dic_temp["station"] = data[0]
+                        JAGI_Dic_temp["time_stamp"] = data[1]
+                        JAGI_Dic_temp["prediction"] = data[2]
+                        JAGI_Dic.append(JAGI_Dic_temp)
+                    elif data[0] == "BBJI" :
+                        # BBJI_Array = np.vstack((BBJI_Array, predic_res))
+                        BBJI_Dic_temp = {}
+                        BBJI_Dic_temp["station"] = data[0]
+                        BBJI_Dic_temp["time_stamp"] = data[1]
+                        BBJI_Dic_temp["prediction"] = data[2]
+                        BBJI_Dic.append(BBJI_Dic_temp)
+                    elif data[0] == "SMRI" :
+                        # SMRI_Array = np.vstack((SMRI_Array, predic_res))
+                        SMRI_Dic_temp = {}
+                        SMRI_Dic_temp["station"] = data[0]
+                        SMRI_Dic_temp["time_stamp"] = data[1]
+                        SMRI_Dic_temp["prediction"] = data[2]
+                        SMRI_Dic.append(SMRI_Dic_temp)
 
             # print(len(JAGI_Array))
-            print(JAGI_Dic)
-            # print(len(BBJI_Array))
-            print(BBJI_Dic)
-            # print(len(SMRI_Array))
-            print(SMRI_Dic)
+            # print(JAGI_Dic)
+            # # print(len(BBJI_Array))
+            # print(BBJI_Dic)
+            # # print(len(SMRI_Array))
+            # print(SMRI_Dic)
 
             data_to_db = {
                 'JAGI' : JAGI_Dic,
                 'BBJI' : BBJI_Dic,
                 'SMRI' : SMRI_Dic
             }
+
+            # print(f"len : {len(results[0])}")
+            # print(JAGI_Dic)
 
             try:
                 # Use the push method to add data (creates a new unique key)

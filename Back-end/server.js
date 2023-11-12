@@ -35,46 +35,47 @@ io.on('connection', (socket) => {
   const ref_waves_SMRI = db.ref('/waves/SMRI')
   const ref_waves_JAGI = db.ref('/waves/JAGI')
 
-  ref_prediction.on('value', (snapshot) => {
+  ref_prediction.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data.length)
     socket.emit('prediction-data-all', data);
   });
 
-  ref_prediction_BBJI.on('value', (snapshot) => {
+  ref_prediction_BBJI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data.length)
     socket.emit('prediction-data-BBJI', data);
   })
 
-  ref_prediction_SMRI.on('value', (snapshot) => {
+  ref_prediction_SMRI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    console.log(data.length)
     socket.emit('prediction-data-SMRI', data);
   })
 
-  ref_prediction_JAGI.on('value', (snapshot) => {
+  ref_prediction_JAGI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data.length)
     socket.emit('prediction-data-JAGI', data);
   })
 
+  
   // waves
-  ref_waves_BBJI.on('value', (snapshot) => {
+  ref_waves_BBJI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data)
     socket.emit('waves-data-BBJI', data);
   })
 
-  ref_waves_SMRI.on('value', (snapshot) => {
+  ref_waves_SMRI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data.length)
     socket.emit('waves-data-SMRI', data);
   })
 
-  ref_waves_JAGI.on('value', (snapshot) => {
+  ref_waves_JAGI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data)
+    // console.log(data.length)
     socket.emit('waves-data-JAGI', data);
   })
 

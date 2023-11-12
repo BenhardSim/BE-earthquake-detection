@@ -19,8 +19,8 @@ admin.initializeApp(
 
 // Create a reference to your Firebase Realtime Database
 const db = admin.database();
-const ref = db.ref('/waves');
-var startChild = "JAGI";
+const ref = db.ref('/');
+var startChild = "prediction";
 var batchSize = 10;
 
 function deleteNextBatch() {
@@ -31,6 +31,7 @@ function deleteNextBatch() {
     .then(function(snapshot) {
       var updates = {};
       snapshot.forEach(function(childSnapshot) {
+      	console.log(childSnapshot.key)
         updates[childSnapshot.key] = null; // Set to null to delete
         startChild = childSnapshot.key; // Update the startChild marker
       });
