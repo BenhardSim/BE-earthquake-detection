@@ -30,15 +30,25 @@ io.on('connection', (socket) => {
   const ref_prediction_SMRI = db.ref('/prediction/SMRI')
   const ref_prediction_JAGI = db.ref('/prediction/JAGI')
 
+  
+  const ref_prediction_warning = db.ref('/prediction/JAGI')
+
   const ref_waves = db.ref('/waves');
   const ref_waves_BBJI = db.ref('/waves/BBJI')
   const ref_waves_SMRI = db.ref('/waves/SMRI')
   const ref_waves_JAGI = db.ref('/waves/JAGI')
+  const ref_waves_warning = db.ref('/prediction_warning_only')
 
   ref_prediction.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
     // console.log(data.length)
     socket.emit('prediction-data-all', data);
+  });
+
+  ref_waves_warning.limitToLast(1).on('child_added', (snapshot) => {
+    const data = snapshot.val();
+    // console.log(data.length)
+    socket.emit('prediction-warning-only', data);
   });
 
   ref_prediction_BBJI.limitToLast(1).on('child_added', (snapshot) => {
