@@ -20,8 +20,8 @@ admin.initializeApp(
 // Create a reference to your Firebase RealtimeDatabase
 const db = admin.database();
 const ref = db.ref('/prediction_warning_only');
-var startChild = "-Nj7d8ESqyx2kFXQJLET"; 
-var batchSize = 1;
+var startChild = "-Nj7yS7_bDzl4aP3-c6A"; 
+var batchSize = 2;
 
 function deleteNextBatch() {
   ref.orderByKey()
