@@ -65,7 +65,9 @@ if tf.test.is_gpu_available():
     gpu_device_name = tf.test.gpu_device_name()
     print(f"GPU Device Name: {gpu_device_name}")
 else:
-    print("CUDA GPU is not available.")
+    print("CUDA GPU is not available.")
+
+ref_warning = db.reference("/prediction_warning_only")
 
 def prediction_res(data_responses):
     window_size = WINDOW_SIZE
@@ -114,11 +116,11 @@ def prediction_res(data_responses):
             data_row = np.array([BHE_channel,BHN_channel,BHZ_channel])
             prediction_array = np.vstack((prediction_array, data_row))
         
-    
+
         # normalisasi data
         normalize_data_array = normalize_data(prediction_array)
-        # input ke model 
 
+        # input ke model 
         normalize_data_array = normalize_data_array.reshape(1, WINDOW_SIZE,3)
         # predictions = model.predict(normalize_data_array,verbose=0)
         # predictions = 1.0
@@ -128,11 +130,27 @@ def prediction_res(data_responses):
         prediction_result = "No Earthquake."
         if(prediction > 0.6):
             prediction_result = "WARNING EARTHQUAKE !!"
-            
+            time_interval_warn = timedelta(microseconds=i*50000)
+            prediction_timestamp_warn = utc_datetime_start_time + time_interval_warn
+            prediction_timestamp_string_warn = prediction_timestamp_warn.isoformat()
+            block_prediction_warn = {
+                "station" : data_responses['stat'],
+                "time_stamp" : prediction_timestamp_string_warn,
+                "prediction_result" : prediction_result
+            }
+            try :
+                ref_warning.push(block_prediction_warn)
+                # print("Warning Data pushed to Database successfully with key:", ref_warning.key)
+            except Exception as e:
+                print("Error pushing data:", e)
         
         # if predictions[0][0] > 0.5:
         #     prediction_result = "WARNING EARTHQUAKE !!"
        
+        # prediksi lokasi
+        # 
+        # 
+
         # simpan kedalam database
         time_interval = timedelta(microseconds=i*50000)
         # block_prediction = np.array([f"<{data_responses['stat']}> Prediction Block : {i} time-stamp : {utc_datetime_start_time + time_interval}", f"Prediction Result : {prediction_result} !!"])
@@ -165,7 +183,7 @@ if __name__ == "__main__":
     ref_SMRI = db.reference("/prediction/SMRI")
     ref_BBJI = db.reference("/prediction/BBJI")
 
-    num_processes = 3
+    num_processes = 1
     consumer = Consumer(kafka_config)
     consumer.subscribe([kafka_topic])
 

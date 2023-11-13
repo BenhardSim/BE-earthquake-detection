@@ -88,10 +88,28 @@ def fetch_data(station_name):
             start_fetch_time = time.time()
             utc_time = datetime.now(pytz.UTC)
             formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
+
+
+            #######-------------------------------------------------------
+            # # test gempa
+            # input_date_str = "20120903_182305"
+            # input_format = "%Y%m%d_%H%M%S"
+            # output_format = "%Y-%m-%dT%H:%M:%S"
+            # # Parse the input date string
+            # input_date = datetime.strptime(input_date_str, input_format)
+            # output_date_str = input_date.strftime(output_format)
+            # formatted_time = "2012-09-03T18:15:00"
+
+            #######-------------------------------------------------------
+
+
             time_fetch = UTCDateTime(formatted_time)
+            print(time_fetch)
             # besar interval waktu yang akan di fetch ke stasiun
             interval_time = BATCH_SIZE + WINDOW_SECOND + missing_time
             st = client.get_waveforms("GE", station_name, "*", "BH*", time_fetch - interval_time, time_fetch)
+            # st = client.get_waveforms("GE", station_name, "*", "BH*", time_fetch - 60*5, time_fetch)
+            print(f"res {st}")
             value = {}
             value["stat"] = station_name
 
@@ -150,7 +168,7 @@ def fetch_data(station_name):
 
 
 # station_names = ["JAGI", "BBJI","SMRI"]
-station_names = ["JAGI","BBJI","SMRI"]
+station_names = ["SMRI"]
 if __name__ == "__main__":
     while True:
         with multiprocessing.Pool(processes=len(station_names)) as pool:

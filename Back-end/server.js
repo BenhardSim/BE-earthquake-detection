@@ -49,13 +49,14 @@ io.on('connection', (socket) => {
 
   ref_prediction_SMRI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    console.log(data.length)
+    // console.log(data.length)
     socket.emit('prediction-data-SMRI', data);
   })
 
   ref_prediction_JAGI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    // console.log(data.length)
+    console.log("data key : " + snapshot.key)
+    console.log(data);
     socket.emit('prediction-data-JAGI', data);
   })
 
@@ -75,7 +76,7 @@ io.on('connection', (socket) => {
 
   ref_waves_JAGI.limitToLast(1).on('child_added', (snapshot) => {
     const data = snapshot.val();
-    // console.log(data.length)
+    // console.log("data key : " + snapshot.key)
     socket.emit('waves-data-JAGI', data);
   })
 

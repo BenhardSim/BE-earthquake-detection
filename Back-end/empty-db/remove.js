@@ -17,11 +17,11 @@ admin.initializeApp(
 );
 
 
-// Create a reference to your Firebase Realtime Database
+// Create a reference to your Firebase RealtimeDatabase
 const db = admin.database();
-const ref = db.ref('/');
-var startChild = "prediction";
-var batchSize = 10;
+const ref = db.ref('/prediction_warning_only');
+var startChild = "-Nj7d8ESqyx2kFXQJLET"; 
+var batchSize = 1;
 
 function deleteNextBatch() {
   ref.orderByKey()

@@ -65,7 +65,7 @@ def get_data_seed_link():
     # Mengambil waktu saat ini
     utc_time = datetime.now(pytz.UTC)
     formatted_time = utc_time.strftime('%Y-%m-%dT%H:%M:%S')
-    starttime = UTCDateTime(formatted_time) 
+    starttime = UTCDateTime("2012-09-03T18:15:00") 
     endtime = starttime
     st = client.get_waveforms("GE", key_partition, "*", "BH*", starttime - 60, endtime)
     value = {}
