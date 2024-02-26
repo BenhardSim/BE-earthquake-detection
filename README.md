@@ -1,4 +1,4 @@
-# BE-earthquake-detection 
+# BE-earthquake-detection ( DEPRECATED )
 Created By : **Benhard Sim**
 
 this is a Back-end application for Earthquake detection data **pipeline** that utilise confluent Kafka for data broker and seedLink protocol with geofon service to predict the existence of earthquake in the Java island region. 
